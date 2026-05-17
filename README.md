@@ -153,7 +153,41 @@ This will create the backend, frontend, MongoDB, Prometheus, Grafana, and node-e
    npm run build
    ```
 
-## 📊 API Endpoints
+## � CI/CD Pipeline
+
+This repository now includes a GitHub Actions pipeline that:
+
+- Builds the backend and frontend Docker images
+- Pushes images to a container registry
+- Deploys updates to a Kubernetes cluster
+
+### Required GitHub secrets
+
+- `KUBE_CONFIG_DATA`: Base64-encoded Kubernetes config file for the target cluster
+- `REGISTRY_URL` (optional): Container registry URL, e.g. `ghcr.io` or `docker.io`
+- `REGISTRY_USERNAME` (optional): Registry username
+- `REGISTRY_PASSWORD` (optional): Registry password or access token
+
+When `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` are not provided, the workflow defaults to `github.actor` and `github.token`, which works for GitHub Container Registry (`ghcr.io`) if repository permissions allow it.
+
+### How it works
+
+1. Push to `main` or trigger the workflow manually
+2. GitHub Actions builds both Docker images
+3. Actions pushes images to the configured registry
+4. Actions applies the Kubernetes manifests in `k8s/`
+5. The deployment updates backend and frontend image tags with the new version
+
+### Kubernetes manifests
+
+The repository now contains Kubernetes manifests in `k8s/` for:
+
+- `backend-deployment.yaml`
+- `frontend-deployment.yaml`
+
+These create `Deployment` and `Service` resources for the backend and frontend.
+
+## �📊 API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - Register new user

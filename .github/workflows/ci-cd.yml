@@ -1,0 +1,82 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGISTRY_URL: ghcr.io
+  IMAGE_NAMESPACE: ${{ github.repository_owner }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME || github.actor }}
+          password: ${{ secrets.REGISTRY_PASSWORD || github.token }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAMESPACE }}/absolute-cinema-backend:${{ github.sha }}
+            ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAMESPACE }}/absolute-cinema-backend:latest
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAMESPACE }}/absolute-cinema-frontend:${{ github.sha }}
+            ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAMESPACE }}/absolute-cinema-frontend:latest
+
+  deploy:
+    name: Deploy to Kubernetes Cluster
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubeconfig
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > kubeconfig
+          chmod 600 kubeconfig
+          export KUBECONFIG=$PWD/kubeconfig
+          kubectl config view
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+
+      - name: Apply Kubernetes manifests
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          kubectl apply -f k8s/
+          kubectl set image deployment/absolute-cinema-backend backend=${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAMESPACE }}/absolute-cinema-backend:${{ github.sha }} --record
+          kubectl set image deployment/absolute-cinema-frontend frontend=${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAMESPACE }}/absolute-cinema-frontend:${{ github.sha }} --record
+          kubectl rollout status deployment/absolute-cinema-backend --timeout=120s
+          kubectl rollout status deployment/absolute-cinema-frontend --timeout=120s
