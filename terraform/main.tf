@@ -61,6 +61,10 @@ resource "docker_image" "prometheus" {
   name = "prom/prometheus:latest"
 }
 
+resource "docker_image" "alertmanager" {
+  name = "prom/alertmanager:latest"
+}
+
 resource "docker_image" "grafana" {
   name = "grafana/grafana:latest"
 }
@@ -116,14 +120,14 @@ resource "docker_container" "prometheus" {
 
   mounts {
     target    = "/etc/prometheus/prometheus.yml"
-    source    = "${path.module}/../prometheus/prometheus.yml"
+    source    = abspath("${path.module}/../prometheus/prometheus.yml")
     type      = "bind"
     read_only = true
   }
 
   mounts {
     target    = "/etc/prometheus/alert_rules.yml"
-    source    = "${path.module}/../prometheus/alert_rules.yml"
+    source    = abspath("${path.module}/../prometheus/alert_rules.yml")
     type      = "bind"
     read_only = true
   }
@@ -134,8 +138,34 @@ resource "docker_container" "prometheus" {
   }
 
   depends_on = [
-    docker_container.node_exporter
+    docker_container.node_exporter,
+    docker_container.alertmanager
   ]
+}
+
+resource "docker_container" "alertmanager" {
+  name    = "absolute_cinema_alertmanager"
+  image   = docker_image.alertmanager.image_id
+  restart = "always"
+
+  networks_advanced {
+    name    = docker_network.app.name
+    aliases = ["alertmanager"]
+  }
+
+  command = ["--config.file=/etc/alertmanager/alertmanager.yml"]
+
+  mounts {
+    target    = "/etc/alertmanager/alertmanager.yml"
+    source    = abspath("${path.module}/../alertmanager/alertmanager.yml")
+    type      = "bind"
+    read_only = true
+  }
+
+  ports {
+    internal = 9093
+    external = 9093
+  }
 }
 
 resource "docker_container" "grafana" {
@@ -154,14 +184,14 @@ resource "docker_container" "grafana" {
 
   mounts {
     target    = "/etc/grafana/provisioning/datasources"
-    source    = "${path.module}/../grafana/provisioning/datasources"
+    source    = abspath("${path.module}/../grafana/provisioning/datasources")
     type      = "bind"
     read_only = true
   }
 
   mounts {
     target    = "/etc/grafana/provisioning/dashboards"
-    source    = "${path.module}/../grafana/provisioning/dashboards"
+    source    = abspath("${path.module}/../grafana/provisioning/dashboards")
     type      = "bind"
     read_only = true
   }

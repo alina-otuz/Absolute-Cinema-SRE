@@ -41,3 +41,22 @@ groups:
         annotations:
           summary: "High disk I/O latency detected"
           description: "Disk I/O time is above 10% for 5 minutes"
+
+  - name: slo_alerts
+    rules:
+      - alert: BookingErrorRateHigh
+        expr: sum(rate(http_requests_total{route="/api/bookings",status_code=~"5.."}[10m])) / sum(rate(http_requests_total{route="/api/bookings"}[10m])) * 100 > 1
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Booking success SLO breach"
+          description: "Booking error rate is above 1% for 10 minutes, violating the 99% success rate SLO."
+      - alert: MovieSearchLatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{route="/api/movies"}[10m])) by (le)) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Movie search latency SLO breach"
+          description: "P95 latency for /api/movies is above 2 seconds for 10 minutes."

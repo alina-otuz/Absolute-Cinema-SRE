@@ -124,6 +124,45 @@ This will create the backend, frontend, MongoDB, Prometheus, Grafana, and node-e
 - Prometheus: `http://localhost:9090`
 - Grafana: `http://localhost:3000`
 
+## 📈 Monitoring, SLIs, and SLOs
+
+- The backend exposes Prometheus metrics at `/metrics`.
+- Prometheus scrapes the backend and node-exporter every 15 seconds.
+- Grafana includes a `Golden Signals & SLOs` dashboard that tracks:
+  - request throughput
+  - p95 latency
+  - error rate
+  - booking success rate (99% SLO)
+  - movie search latency P95 (< 2s SLO)
+  - active firing alerts
+- Alertmanager is configured to receive Prometheus alerts for service availability, high resource usage, and SLO breaches.
+
+## ⚡ Load Testing
+
+A Locust load test is available in `load-tests/locustfile.py`.
+
+Run the test after the backend is available:
+
+```bash
+cd load-tests
+python -m pip install locust
+locust -f locustfile.py --host=http://localhost:3001 --headless -u 20 -r 5 -t 1m
+```
+
+### What it validates
+
+- backend request success rate
+- public API latency
+- overall request throughput
+
+### Load test location
+
+- `load-tests/locustfile.py`
+
+### Load test docs
+
+- `load-tests/README.md`
+
 ### Frontend Setup
 
 1. **Navigate to frontend directory**:
