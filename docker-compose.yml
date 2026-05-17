@@ -1,0 +1,70 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: absolute-cinema-backend:latest
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/absolute_cinema
+      - JWT_SECRET=your-secret-key-here
+      - CORS_ORIGIN=http://localhost:3001,http://localhost:80
+    depends_on:
+      - mongo
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: absolute-cinema-frontend:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    depends_on:
+      - node-exporter
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+
+volumes:
+  mongo-data:
+  grafana-storage:

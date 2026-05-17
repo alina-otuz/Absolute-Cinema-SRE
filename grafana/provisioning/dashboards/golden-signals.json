@@ -1,0 +1,148 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Absolute Cinema - Golden Signals & SLOs (Prod)",
+    "tags": ["absolute-cinema", "golden-signals", "slos", "production"],
+    "timezone": "browser",
+    "refresh": "10s",
+    "schemaVersion": 38,
+    "version": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Traffic - Requests per Second",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[5m]))",
+            "legendFormat": "RPS"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+      },
+      {
+        "id": 2,
+        "title": "Latency - P95 (seconds)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+            "legendFormat": "p95 latency"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "color": "green", "value": null },
+                { "color": "red", "value": 2 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+      },
+      {
+        "id": 3,
+        "title": "Errors - 5xx Rate (%)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{status_code=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100",
+            "legendFormat": "5xx %"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+      },
+      {
+        "id": 4,
+        "title": "Saturation - CPU Usage (%)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "(rate(process_cpu_user_seconds_total[5m]) + rate(process_cpu_system_seconds_total[5m])) * 100",
+            "legendFormat": "CPU %"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+      },
+      {
+        "id": 5,
+        "title": "Traffic by Route",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[5m])) by (route)",
+            "legendFormat": "{{route}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
+      },
+      {
+        "id": 6,
+        "title": "Errors by Route (5xx)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{status_code=~\"5..\"}[5m])) by (route)",
+            "legendFormat": "{{route}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
+      },
+      {
+        "id": 7,
+        "title": "SLO: Booking Success Rate (Target: 99%)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{route=\"/api/bookings\",status_code=~\"2..\"}[6h])) / sum(rate(http_requests_total{route=\"/api/bookings\"}[6h])) * 100",
+            "legendFormat": "Success %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "color": "red", "value": null },
+                { "color": "green", "value": 99 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 }
+      },
+      {
+        "id": 8,
+        "title": "SLO: Movie Search Latency (P95 < 2s)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{route=\"/api/movies\"}[6h])) by (le))",
+            "legendFormat": "p95 (s)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "color": "green", "value": null },
+                { "color": "red", "value": 2 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 }
+      }
+    ]
+  }
+}

@@ -1,0 +1,43 @@
+groups:
+  - name: service_alerts
+    rules:
+      - alert: NodeExporterDownWarning
+        expr: up{job="node-exporter"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Node Exporter is down"
+          description: "Node Exporter has been down for more than 1 minute"
+      - alert: BackendDownCritical
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend service is down"
+          description: "Backend service has been down for more than 1 minute"
+      - alert: HighMemoryUsageWarning
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 80% for 5 minutes"
+      - alert: HighNetworkTrafficCritical
+        expr: rate(node_network_receive_bytes_total[5m]) + rate(node_network_transmit_bytes_total[5m]) > 10000000
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High network traffic detected"
+          description: "Network traffic is above 10 MB/s for 2 minutes"
+      - alert: HighDiskIOLatencyWarning
+        expr: rate(node_disk_io_time_seconds_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk I/O latency detected"
+          description: "Disk I/O time is above 10% for 5 minutes"

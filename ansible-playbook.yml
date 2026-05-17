@@ -1,0 +1,53 @@
+- name: Build and deploy the full Absolute Cinema stack
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+
+  vars:
+    app_root: "{{ playbook_dir }}"
+
+  tasks:
+    - name: Update apt package cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install Docker and Compose plugin
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose-plugin
+        state: present
+
+    - name: Ensure Docker service is started and enabled
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Build backend and frontend images with Docker Compose
+      ansible.builtin.command:
+        cmd: docker compose build backend frontend
+      args:
+        chdir: "{{ app_root }}"
+
+    - name: Launch the full Docker Compose stack
+      ansible.builtin.command:
+        cmd: docker compose up -d
+      args:
+        chdir: "{{ app_root }}"
+
+    - name: Wait for backend to become available
+      ansible.builtin.uri:
+        url: http://localhost:3001/api/auth
+        method: GET
+        status_code: 200
+        retries: 10
+        delay: 5
+      register: backend_check
+      ignore_errors: true
+
+    - name: Report backend startup status
+      ansible.builtin.debug:
+        msg: "Backend startup result: {{ backend_check.status }}"

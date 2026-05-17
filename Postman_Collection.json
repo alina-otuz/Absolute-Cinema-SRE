@@ -1,0 +1,540 @@
+{
+  "info": {
+    "_postman_id": "cinema-api-collection",
+    "name": "Cinema Booking API",
+    "description": "Complete API collection for cinema booking application with Movies and Reviews",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"SecurePass123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('accessToken', jsonData.accessToken);",
+                  "    pm.environment.set('refreshToken', jsonData.refreshToken);",
+                  "    console.log('Token saved to environment');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testuser@example.com\",\n  \"password\": \"SecurePass123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newusername\",\n  \"email\": \"newemail@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Movies",
+      "item": [
+        {
+          "name": "List All Movies",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/movies?genre=Action&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "movies"],
+              "query": [
+                {
+                  "key": "genre",
+                  "value": "Action",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Movie by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/movies/{{movieId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "movies", "{{movieId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Movie (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Inception\",\n  \"description\": \"A mind-bending thriller about a thief who steals corporate secrets through dream sharing technology\",\n  \"genre\": \"Sci-Fi\",\n  \"director\": \"Christopher Nolan\",\n  \"releaseDate\": \"2010-07-16\",\n  \"duration\": 148,\n  \"posterUrl\": \"https://example.com/inception.jpg\",\n  \"cast\": [\"Leonardo DiCaprio\", \"Marion Cotillard\", \"Tom Hardy\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/movies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "movies"]
+            }
+          }
+        },
+        {
+          "name": "Update Movie (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Inception Updated\",\n  \"description\": \"Updated description here\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/movies/{{movieId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "movies", "{{movieId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Movie (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/movies/{{movieId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "movies", "{{movieId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Get Movie Reviews",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/movie/{{movieId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews", "movie", "{{movieId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movieId\": \"{{movieId}}\",\n  \"rating\": 9,\n  \"comment\": \"Amazing movie! Absolutely loved it!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews"]
+            }
+          }
+        },
+        {
+          "name": "Update Review",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 8,\n  \"comment\": \"Updated comment\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/{{reviewId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews", "{{reviewId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Review",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/{{reviewId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews", "{{reviewId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Showtimes",
+      "item": [
+        {
+          "name": "List All Showtimes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/showtimes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "showtimes"]
+            }
+          }
+        },
+        {
+          "name": "Get Showtime by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/showtimes/{{showtimeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "showtimes", "{{showtimeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Showtime (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movieTitle\": \"Inception\",\n  \"startTime\": \"2026-02-14T19:00:00Z\",\n  \"endTime\": \"2026-02-14T21:30:00Z\",\n  \"totalSeats\": 100,\n  \"availableSeats\": 100,\n  \"price\": 12.99\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/showtimes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "showtimes"]
+            }
+          }
+        },
+        {
+          "name": "Update Showtime (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movieTitle\": \"Inception Updated\",\n  \"price\": 13.99\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/showtimes/{{showtimeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "showtimes", "{{showtimeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Showtime (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/showtimes/{{showtimeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "showtimes", "{{showtimeId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showtimeId\": \"{{showtimeId}}\",\n  \"seats\": [1, 2, 3]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings"]
+            }
+          }
+        },
+        {
+          "name": "Get Booking History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings"]
+            }
+          }
+        },
+        {
+          "name": "Get Booking Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings", "{{bookingId}}"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings", "{{bookingId}}", "cancel"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "movieId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "showtimeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bookingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reviewId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
