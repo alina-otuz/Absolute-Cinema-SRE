@@ -8,12 +8,15 @@ on:
 
 env:
   REGISTRY_URL: ghcr.io
-  IMAGE_NAMESPACE: ${{ github.repository_owner }}
+  IMAGE_NAMESPACE: alina-otuz
 
 jobs:
   build-and-push:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,12 +24,13 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+     
       - name: Log in to container registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USERNAME || github.actor }}
-          password: ${{ secrets.REGISTRY_PASSWORD || github.token }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
@@ -64,10 +68,11 @@ jobs:
 
       - name: Configure kubeconfig
         run: |
-          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > kubeconfig
-          chmod 600 kubeconfig
-          export KUBECONFIG=$PWD/kubeconfig
-          kubectl config view
+          mkdir -p $(dirname "${{ github.workspace }}/kubeconfig")
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > "${{ github.workspace }}/kubeconfig"
+          chmod 600 "${{ github.workspace }}/kubeconfig"
+          export KUBECONFIG="${{ github.workspace }}/kubeconfig"
+          kubectl config view --flatten
         env:
           KUBECONFIG: ${{ github.workspace }}/kubeconfig
 
@@ -76,7 +81,7 @@ jobs:
           KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
           kubectl apply -f k8s/
-          kubectl set image deployment/absolute-cinema-backend backend=${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAMESPACE }}/absolute-cinema-backend:${{ github.sha }} --record
-          kubectl set image deployment/absolute-cinema-frontend frontend=${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAMESPACE }}/absolute-cinema-frontend:${{ github.sha }} --record
+          kubectl set image deployment/absolute-cinema-backend backend=${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAMESPACE }}/absolute-cinema-backend:${{ github.sha }}
+          kubectl set image deployment/absolute-cinema-frontend frontend=${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAMESPACE }}/absolute-cinema-frontend:${{ github.sha }}
           kubectl rollout status deployment/absolute-cinema-backend --timeout=120s
           kubectl rollout status deployment/absolute-cinema-frontend --timeout=120s
